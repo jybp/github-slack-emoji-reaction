@@ -13,12 +13,14 @@ import (
 var (
 	url       string
 	channelID string
+	unreact   bool
 )
 
 func init() {
 	log.SetFlags(0)
 	flag.StringVar(&url, "url", "", `The GitHub Pull Request URL to add an amoji reaction to.`)
-	flag.StringVar(&channelID, "channel", "", `The Slack channel ID to search 'url' into.`)
+	flag.StringVar(&channelID, "channel", "", "The Slack channel ID to search 'url' into.")
+	flag.BoolVar(&unreact, "unreact", false, "Unreacts instead of reacts.")
 	flag.Parse()
 }
 
@@ -39,5 +41,8 @@ func run() error {
 	}
 	ctx := context.Background()
 	api := slack.New(slackToken)
+	if unreact {
+		return api.UnreactChannel(ctx, channelID, url, slack.EmojiApproved, 100)
+	}
 	return api.ReactChannel(ctx, channelID, url, slack.EmojiApproved, 100)
 }
