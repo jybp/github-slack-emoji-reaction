@@ -42,7 +42,7 @@ func run() error {
 	ctx := context.Background()
 	api := slack.New(slackToken)
 	if unreact {
-		return api.UnreactChannel(ctx, channelID, url, slack.EmojiApproved, 100)
+		return api.UnreactChannel(ctx, channelID, url, slack.EmojiApprove, 100)
 	}
-	return api.ReactChannel(ctx, channelID, url, slack.EmojiApproved, 100)
+	return api.ReactChannel(ctx, channelID, url, slack.EmojiApprove, 100)
 }

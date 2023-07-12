@@ -8,8 +8,20 @@ import (
 )
 
 var (
-	// Emojis available by defualt on Slack workspaces.
-	EmojiApproved = "white_check_mark"
+	// Emojis available by default on Slack workspaces.
+
+	// Review state:
+	// https://docs.github.com/en/rest/pulls/reviews?apiVersion=2022-11-28#list-reviews-for-a-pull-request
+	EmojiApprove        = "white_check_mark" // ✅ APPROVE
+	EmojiComment        = "speech_balloon"   // 💬 COMMENT
+	EmojiRequestChanges = "x"                // ❌ REQUEST_CHANGES
+
+	// PR state:
+	// https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#get-a-pull-request
+	EmojiDraft  = ""
+	EmojiOpen   = ""
+	EmojiMerged = "larged_purple_square" // 🟪
+	EmojiClosed = "no_entry"             // ⛔
 
 	// Error strings returned by the slack API,
 	errAlreadyReacted = "already_reacted"
