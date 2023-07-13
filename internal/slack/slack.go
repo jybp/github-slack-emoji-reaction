@@ -3,6 +3,7 @@ package slack
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/slack-go/slack"
 )
@@ -25,6 +26,7 @@ var (
 
 	// Error strings returned by the slack API,
 	errAlreadyReacted = "already_reacted"
+	errNoReaction     = "no_reaction"
 )
 
 type API struct {
@@ -44,6 +46,9 @@ func (api API) ReactChannel(ctx context.Context, channelID, url, emoji string, l
 		return fmt.Errorf("GetConversationHistoryContext(): %w", err)
 	}
 	for _, msg := range resp.Messages {
+		if !strings.Contains(msg.Text, url) {
+			continue
+		}
 		ref := slack.NewRefToMessage(channelID, msg.Timestamp)
 		err := api.client.AddReactionContext(ctx, emoji, ref)
 		if err != nil && err.Error() != errAlreadyReacted {
@@ -62,9 +67,12 @@ func (api API) UnreactChannel(ctx context.Context, channelID, url, emoji string,
 		return fmt.Errorf("GetConversationHistoryContext(): %w", err)
 	}
 	for _, msg := range resp.Messages {
+		if !strings.Contains(msg.Text, url) {
+			continue
+		}
 		ref := slack.NewRefToMessage(channelID, msg.Timestamp)
 		err := api.client.RemoveReactionContext(ctx, emoji, ref)
-		if err != nil && err.Error() != errAlreadyReacted {
+		if err != nil && err.Error() != errNoReaction {
 			return fmt.Errorf("AddReactionContext(ctx,%s,%+v): %w", emoji, ref, err)
 		}
 	}

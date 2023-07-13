@@ -1,6 +1,5 @@
 # github-slack-emoji-reaction
 
-
 ## Installation
 
 1. "Create an App" at https://api.slack.com/apps.
