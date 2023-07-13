@@ -3,6 +3,7 @@ package slack
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/slack-go/slack"
@@ -33,8 +34,8 @@ type API struct {
 	client *slack.Client
 }
 
-func New(token string) API {
-	return API{slack.New(token)}
+func New(httpCLient *http.Client, token string) API {
+	return API{slack.New(token, slack.OptionHTTPClient(httpCLient))}
 }
 
 func (api API) ReactChannel(ctx context.Context, channelID, url, emoji string, limit int) error {

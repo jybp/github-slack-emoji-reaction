@@ -1,6 +1,8 @@
 # github-slack-emoji-reaction
 
-## Installation
+## Slack token
+
+Use a token with the following permissions: "channels:history", "reactions:read", "reactions:write".
 
 1. "Create an App" at https://api.slack.com/apps.
 2. "From an app manifest".
@@ -36,3 +38,12 @@
 5. "Install to Workspace" under Settings / Basic Information.
 6. "Allow".
 7. Copy "Bot User OAuth Token" under Features / OAuth & Permissions.
+
+## GitHub token
+
+Use a token with the following permission: "Pull requests" (Read-only).
+
+1. Settings.
+2. Developer settings.
+3. Personal access tokens.
+4. Select "Pull requests" (Read-only).

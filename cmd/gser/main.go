@@ -5,8 +5,10 @@ import (
 	"errors"
 	"flag"
 	"log"
+	"net/http"
 	"os"
 
+	"github.com/jybp/github-slack-emoji-reaction/internal/github"
 	"github.com/jybp/github-slack-emoji-reaction/internal/slack"
 )
 
@@ -35,14 +37,28 @@ func run() error {
 	if len(slackToken) == 0 {
 		return errors.New("SLACK_TOKEN not set")
 	}
+	githubToken := os.Getenv("GITHUB_TOKEN")
+	if len(slackToken) == 0 {
+		return errors.New("GITHUB_TOKEN not set")
+	}
 	if len(url) == 0 || len(channelID) == 0 {
 		flag.PrintDefaults()
 		return nil
 	}
+
 	ctx := context.Background()
-	api := slack.New(slackToken)
+
+	slackAPI := slack.New(http.DefaultClient, slackToken)
 	if unreact {
-		return api.UnreactChannel(ctx, channelID, url, slack.EmojiApprove, 100)
+		return slackAPI.UnreactChannel(ctx, channelID, url, slack.EmojiApprove, 100)
 	}
-	return api.ReactChannel(ctx, channelID, url, slack.EmojiApprove, 100)
+
+	githubAPI := github.New(http.DefaultClient, githubToken)
+	status, err := githubAPI.PullRequestStatus(ctx, url)
+	if err != nil {
+		return err
+	}
+	_ = status
+
+	return slackAPI.ReactChannel(ctx, channelID, url, slack.EmojiApprove, 100)
 }
