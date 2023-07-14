@@ -4,24 +4,21 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
-	"github.com/jybp/github-slack-emoji-reaction/internal/github"
 	"github.com/jybp/github-slack-emoji-reaction/internal/slack"
 )
 
 var (
-	url       string
-	channelID string
-	unreact   bool
+	unreact bool
 )
 
 func init() {
 	log.SetFlags(0)
-	flag.StringVar(&url, "url", "", `The GitHub Pull Request URL to add an amoji reaction to.`)
-	flag.StringVar(&channelID, "channel", "", "The Slack channel ID to search 'url' into.")
 	flag.BoolVar(&unreact, "unreact", false, "Unreacts instead of reacts.")
 	flag.Parse()
 }
@@ -33,32 +30,49 @@ func main() {
 }
 
 func run() error {
-	slackToken := os.Getenv("SLACK_TOKEN")
-	if len(slackToken) == 0 {
-		return errors.New("SLACK_TOKEN not set")
+	slackBotToken := os.Getenv("SLACK_BOT_TOKEN")
+	if len(slackBotToken) == 0 {
+		return errors.New("SLACK_BOT_TOKEN not set")
 	}
 	githubToken := os.Getenv("GITHUB_TOKEN")
-	if len(slackToken) == 0 {
+	if len(githubToken) == 0 {
 		return errors.New("GITHUB_TOKEN not set")
 	}
-	if len(url) == 0 || len(channelID) == 0 {
-		flag.PrintDefaults()
-		return nil
+	channelIDs := strings.Split(os.Getenv("SLACK_CHANNEL_IDS"), ",")
+	if len(channelIDs) == 0 {
+		return errors.New("SLACK_CHANNEL_IDS not set")
+	}
+	ghEventPath := os.Getenv("GITHUB_EVENT_PATH")
+	if len(ghEventPath) == 0 {
+		return errors.New("GITHUB_EVENT_PATH not set")
+	}
+	ghEvent, err := os.ReadFile(ghEventPath)
+	if err != nil {
+		return fmt.Errorf("could not read %s: %w", ghEventPath, err)
 	}
 
+	fmt.Printf("%s:\n%s\n", ghEventPath, string(ghEvent))
 	ctx := context.Background()
 
-	slackAPI := slack.New(http.DefaultClient, slackToken)
-	if unreact {
-		return slackAPI.UnreactChannel(ctx, channelID, url, slack.EmojiApprove, 100)
-	}
+	_ = githubToken
+	// githubAPI := github.New(http.DefaultClient, githubToken)
+	// status, err := githubAPI.PullRequestStatus(ctx, url)
+	// if err != nil {
+	// 	return err
+	// }
+	// _ = status
 
-	githubAPI := github.New(http.DefaultClient, githubToken)
-	status, err := githubAPI.PullRequestStatus(ctx, url)
-	if err != nil {
-		return err
+	slackAPI := slack.New(http.DefaultClient, slackBotToken)
+	for _, channelID := range channelIDs {
+		if unreact {
+			if err := slackAPI.UnreactChannel(ctx, channelID, "a", slack.EmojiApprove, 100); err != nil {
+				return fmt.Errorf("unreact failed: %w", err)
+			}
+			continue
+		}
+		if err := slackAPI.ReactChannel(ctx, channelID, "a", slack.EmojiApprove, 100); err != nil {
+			return fmt.Errorf("react failed: %w", err)
+		}
 	}
-	_ = status
-
-	return slackAPI.ReactChannel(ctx, channelID, url, slack.EmojiApprove, 100)
+	return nil
 }
