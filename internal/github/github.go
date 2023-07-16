@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"strings"
 
 	"github.com/google/go-github/v53/github"
 )
@@ -56,6 +58,7 @@ func (api API) PullRequestStatus(ctx context.Context, owner, repo string, number
 		return PullRequestStatus{},
 			fmt.Errorf("PullRequests.Get(,%s, %s, %d): %w", owner, repo, number, err)
 	}
+	log.Printf("PR %s %s %d: %s\n", owner, repo, number, pr.String())
 	status := PullRequestStatus{
 		Merged: pr.GetMerged(),
 	}
@@ -67,8 +70,9 @@ func (api API) PullRequestStatus(ctx context.Context, owner, repo string, number
 		return PullRequestStatus{},
 			fmt.Errorf("PullRequests.Get(,%s, %s, %d): %w", owner, repo, number, err)
 	}
-	for _, review := range reviews {
-		switch review.GetState() {
+	for i, review := range reviews {
+		log.Printf("review %d: %s\n", i, review.String())
+		switch strings.ToLower(review.GetState()) {
 		case "changes_requested":
 			status.ChangesRequested = true
 		case "approved":

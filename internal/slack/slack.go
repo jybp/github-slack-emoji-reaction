@@ -3,6 +3,7 @@ package slack
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -41,11 +42,13 @@ func (api API) SetEmojis(ctx context.Context, match string, channelIDs []string,
 		if err != nil {
 			return fmt.Errorf("GetConversationHistoryContext(,%s): %w", channelID, err)
 		}
+		log.Printf("%d messages found in channel %s\n", len(resp.Messages), channelID)
 		for _, msg := range resp.Messages {
 			if !strings.Contains(msg.Text, match) {
 				continue
 			}
 			ref := slack.NewRefToMessage(channelID, msg.Timestamp)
+			log.Printf("message %+v adding emojis %+v\n", ref, emojis)
 			for emoji, set := range emojis {
 				if set {
 					if err := api.client.AddReactionContext(ctx, emoji, ref); err != nil &&

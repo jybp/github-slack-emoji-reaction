@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -27,7 +28,8 @@ func init() {
 
 func main() {
 	if err := run(); err != nil {
-		log.Fatalf("%+v", err)
+		fmt.Printf("%+v", err)
+		os.Exit(1)
 	}
 }
 
@@ -53,9 +55,10 @@ func run() error {
 		return fmt.Errorf("could not read %s: %w", ghEventPath, err)
 	}
 
-	if verbose {
-		fmt.Printf("%s:\n%s\n", ghEventPath, string(ghEvent))
+	if !verbose {
+		log.SetOutput(ioutil.Discard)
 	}
+	log.Printf("%s:\n%s\n", ghEventPath, string(ghEvent))
 
 	url, owner, repo, number, err := github.ParsePayload(ghEvent)
 	if err != nil {
@@ -72,6 +75,9 @@ func run() error {
 	if err != nil {
 		return err
 	}
+
+	log.Printf("status for %s: %+v\n", url, status)
+
 	emojis := map[string]bool{
 		slack.EmojiApproved:         status.Approved,
 		slack.EmojiChangesRequested: status.ChangesRequested,
