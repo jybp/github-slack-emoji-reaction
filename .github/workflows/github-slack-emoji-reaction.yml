@@ -4,6 +4,8 @@ on:
     types: [submitted]
   pull_request:
     types: [closed]
+permissions:
+  pull-requests: read
 jobs:
   gser:
     runs-on: ubuntu-latest
