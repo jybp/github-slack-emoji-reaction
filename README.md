@@ -1,49 +1,39 @@
 # github-slack-emoji-reaction
 
-## Slack token
+1. Add the GitHub workflow below in your repository.
+2. Set a Slack bot token in the `SLACK_BOT_TOKEN` secret with the following permissions: `channels:history`, `reactions:read`, `reactions:write`.
+3. Update `SLACK_CHANNEL_IDS` with the channel IDs to cover.
+4. Optionally customize the Slack emojis.
+5. Invite the bot to the channels in Slack.
 
-Use a token with the following permissions: "channels:history", "reactions:read", "reactions:write".
-
-1. "Create an App" at https://api.slack.com/apps.
-2. "From an app manifest".
-3. Choose the Slack workspace.
-4. Copy paste the following manifest:
-```json
-{
-    "display_information": {
-        "name": "GSER"
-    },
-    "features": {
-		"bot_user": {
-			"display_name": "GSER"
-		}
-	},
-    "settings": {
-        "org_deploy_enabled": false,
-        "socket_mode_enabled": false,
-        "is_hosted": false,
-        "token_rotation_enabled": false
-    },
-    "oauth_config": {
-		"scopes": {
-			"bot": [
-				"channels:history",
-				"reactions:read",
-				"reactions:write"
-			]
-		}
-	}
-}
 ```
-5. "Install to Workspace" under Settings / Basic Information.
-6. "Allow".
-7. Copy "Bot User OAuth Token" under Features / OAuth & Permissions.
-
-## GitHub token
-
-Use a token with the following permission: "Pull requests" (Read-only).
-
-1. Settings.
-2. Developer settings.
-3. Personal access tokens.
-4. Select "Pull requests" (Read-only).
+name: GitHub Slack Emoji Reaction
+on:
+  pull_request_review:
+    types: [submitted]
+  pull_request:
+    types: [closed, reopened]
+permissions:
+  pull-requests: read
+jobs:
+  gser:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+        - uses: actions/checkout@v3
+          with:
+            repository: jybp/github-slack-emoji-reaction
+        - uses: actions/setup-go@v4
+          with:
+            go-version: '1.20'
+        - run: go run cmd/gser/main.go -v
+          env:
+            GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+            SLACK_BOT_TOKEN: "${{ secrets.SLACK_BOT_TOKEN }}"
+            SLACK_CHANNEL_IDS: C05GGMQ2R61,C05GN394WCC
+            EMOJI_APPROVED: white_check_mark
+            EMOJI_CHANGES_REQUESTED: x
+            EMOJI_COMMENTED: speech_balloon
+            EMOJI_CLOSED: no_entry
+            EMOJI_MERGED: large_purple_square
+```

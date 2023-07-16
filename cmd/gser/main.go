@@ -22,7 +22,7 @@ var (
 
 func init() {
 	log.SetFlags(0)
-	flag.BoolVar(&verbose, "v", false, "Verbose outputs the event payload.")
+	flag.BoolVar(&verbose, "v", false, "verbose mode")
 	flag.Parse()
 }
 
