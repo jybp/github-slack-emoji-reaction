@@ -78,6 +78,21 @@ func run() error {
 
 	log.Printf("status for %s: %+v\n", url, status)
 
+	if len(os.Getenv("EMOJI_APPROVED")) > 0 {
+		slack.EmojiApproved = os.Getenv("EMOJI_APPROVED")
+	}
+	if len(os.Getenv("EMOJI_CHANGES_REQUESTED")) > 0 {
+		slack.EmojiChangesRequested = os.Getenv("EMOJI_CHANGES_REQUESTED")
+	}
+	if len(os.Getenv("EMOJI_COMMENTED")) > 0 {
+		slack.EmojiCommented = os.Getenv("EMOJI_COMMENTED")
+	}
+	if len(os.Getenv("EMOJI_CLOSED")) > 0 {
+		slack.EmojiClosed = os.Getenv("EMOJI_CLOSED")
+	}
+	if len(os.Getenv("EMOJI_MERGED")) > 0 {
+		slack.EmojiMerged = os.Getenv("EMOJI_MERGED")
+	}
 	emojis := map[string]bool{
 		slack.EmojiApproved:         status.Approved,
 		slack.EmojiChangesRequested: status.ChangesRequested,

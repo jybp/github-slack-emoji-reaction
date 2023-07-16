@@ -45,11 +45,11 @@ func New(httpCLient *http.Client) API {
 }
 
 type PullRequestStatus struct {
-	Merged           bool
-	Closed           bool
-	Commented        bool
 	Approved         bool
 	ChangesRequested bool
+	Commented        bool
+	Closed           bool
+	Merged           bool
 }
 
 func (api API) PullRequestStatus(ctx context.Context, owner, repo string, number int) (PullRequestStatus, error) {
@@ -77,10 +77,10 @@ func (api API) PullRequestStatus(ctx context.Context, owner, repo string, number
 	}
 	for _, state := range latestByAuthor {
 		switch state {
-		case "changes_requested":
-			status.ChangesRequested = true
 		case "approved":
 			status.Approved = true
+		case "changes_requested":
+			status.ChangesRequested = true
 		case "commented":
 			status.Commented = true
 		}

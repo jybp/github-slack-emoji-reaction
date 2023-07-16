@@ -17,13 +17,13 @@ var (
 	// Review state:
 	// https://docs.github.com/en/rest/pulls/reviews?apiVersion=2022-11-28#list-reviews-for-a-pull-request
 	EmojiApproved         = "white_check_mark" // ✅
-	EmojiCommented        = "speech_balloon"   // 💬
 	EmojiChangesRequested = "x"                // ❌
+	EmojiCommented        = "speech_balloon"   // 💬
 
 	// PR state:
 	// https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#get-a-pull-request
-	EmojiMerged = "large_purple_square" // 🟪
 	EmojiClosed = "no_entry"            // ⛔
+	EmojiMerged = "large_purple_square" // 🟪
 )
 
 type API struct {

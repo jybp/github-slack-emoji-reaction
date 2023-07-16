@@ -9,6 +9,7 @@ permissions:
 jobs:
   gser:
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
         - uses: actions/checkout@v3
           with:
@@ -21,4 +22,8 @@ jobs:
             GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
             SLACK_BOT_TOKEN: "${{ secrets.SLACK_BOT_TOKEN }}"
             SLACK_CHANNEL_IDS: C05GGMQ2R61,C05GN394WCC
-            
+            EMOJI_APPROVED: white_check_mark
+            EMOJI_CHANGES_REQUESTED: x
+            EMOJI_COMMENTED: speech_balloon
+            EMOJI_CLOSED: no_entry
+            EMOJI_MERGED: large_purple_square
