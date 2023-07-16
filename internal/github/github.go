@@ -70,9 +70,13 @@ func (api API) PullRequestStatus(ctx context.Context, owner, repo string, number
 		return PullRequestStatus{},
 			fmt.Errorf("PullRequests.Get(,%s, %s, %d): %w", owner, repo, number, err)
 	}
+	latestByAuthor := map[int64]string{}
 	for i, review := range reviews {
 		log.Printf("review %d: %s\n", i, review.String())
-		switch strings.ToLower(review.GetState()) {
+		latestByAuthor[review.User.GetID()] = strings.ToLower(review.GetState())
+	}
+	for _, state := range latestByAuthor {
+		switch state {
 		case "changes_requested":
 			status.ChangesRequested = true
 		case "approved":

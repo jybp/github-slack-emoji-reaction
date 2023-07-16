@@ -21,8 +21,8 @@ var (
 
 	// PR state:
 	// https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#get-a-pull-request
-	EmojiMerged = "larged_purple_square" // 🟪
-	EmojiClosed = "no_entry"             // ⛔
+	EmojiMerged = "large_purple_square" // 🟪
+	EmojiClosed = "no_entry"            // ⛔
 )
 
 type API struct {

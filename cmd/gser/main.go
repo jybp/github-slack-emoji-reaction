@@ -87,7 +87,7 @@ func run() error {
 	}
 	slackAPI := slack.New(http.DefaultClient, slackBotToken)
 	if err := slackAPI.SetEmojis(ctx, url, channelIDs, emojis); err != nil {
-		return fmt.Errorf("unreact failed: %w", err)
+		return fmt.Errorf("SetEmojis failed: %w", err)
 	}
 	return nil
 }
