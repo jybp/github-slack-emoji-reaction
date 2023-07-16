@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"unicode"
 
 	"github.com/slack-go/slack"
 )
@@ -44,7 +45,12 @@ func (api API) SetEmojis(ctx context.Context, match string, channelIDs []string,
 		}
 		log.Printf("%d messages found in channel %s\n", len(resp.Messages), channelID)
 		for _, msg := range resp.Messages {
-			if !strings.Contains(msg.Text, match) {
+			idx := strings.LastIndex(msg.Text, match)
+			if idx == -1 {
+				continue
+			}
+			rest := msg.Text[idx+len(match):]
+			if len(rest) > 0 && unicode.IsDigit(rune(rest[0])) {
 				continue
 			}
 			ref := slack.NewRefToMessage(channelID, msg.Timestamp)
