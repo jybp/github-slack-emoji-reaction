@@ -10,16 +10,18 @@ import (
 	"os"
 	"strings"
 
+	"github.com/jybp/github-slack-emoji-reaction/internal/github"
 	"github.com/jybp/github-slack-emoji-reaction/internal/slack"
+	"golang.org/x/oauth2"
 )
 
 var (
-	unreact bool
+	verbose bool
 )
 
 func init() {
 	log.SetFlags(0)
-	flag.BoolVar(&unreact, "unreact", false, "Unreacts instead of reacts.")
+	flag.BoolVar(&verbose, "v", false, "Verbose outputs the event payload.")
 	flag.Parse()
 }
 
@@ -51,28 +53,35 @@ func run() error {
 		return fmt.Errorf("could not read %s: %w", ghEventPath, err)
 	}
 
-	fmt.Printf("%s:\n%s\n", ghEventPath, string(ghEvent))
+	if verbose {
+		fmt.Printf("%s:\n%s\n", ghEventPath, string(ghEvent))
+	}
+
+	url, owner, repo, number, err := github.ParsePayload(ghEvent)
+	if err != nil {
+		return fmt.Errorf("could not parse %s: %w", ghEventPath, err)
+	}
+
 	ctx := context.Background()
-
-	_ = githubToken
-	// githubAPI := github.New(http.DefaultClient, githubToken)
-	// status, err := githubAPI.PullRequestStatus(ctx, url)
-	// if err != nil {
-	// 	return err
-	// }
-	// _ = status
-
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: githubToken},
+	)
+	tc := oauth2.NewClient(ctx, ts)
+	githubAPI := github.New(tc)
+	status, err := githubAPI.PullRequestStatus(ctx, owner, repo, number)
+	if err != nil {
+		return err
+	}
+	emojis := map[string]bool{
+		slack.EmojiApproved:         status.Approved,
+		slack.EmojiChangesRequested: status.ChangesRequested,
+		slack.EmojiCommented:        status.Commented,
+		slack.EmojiClosed:           status.Closed,
+		slack.EmojiMerged:           status.Merged,
+	}
 	slackAPI := slack.New(http.DefaultClient, slackBotToken)
-	for _, channelID := range channelIDs {
-		if unreact {
-			if err := slackAPI.UnreactChannel(ctx, channelID, "a", slack.EmojiApprove, 100); err != nil {
-				return fmt.Errorf("unreact failed: %w", err)
-			}
-			continue
-		}
-		if err := slackAPI.ReactChannel(ctx, channelID, "a", slack.EmojiApprove, 100); err != nil {
-			return fmt.Errorf("react failed: %w", err)
-		}
+	if err := slackAPI.SetEmojis(ctx, url, channelIDs, emojis); err != nil {
+		return fmt.Errorf("unreact failed: %w", err)
 	}
 	return nil
 }

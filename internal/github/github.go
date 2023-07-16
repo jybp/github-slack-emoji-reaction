@@ -2,6 +2,7 @@ package github
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -9,70 +10,72 @@ import (
 )
 
 // pull_request / pull_request_review event payload.
-type actionPayload struct {
-	Action      string `json:"action"` // "closed", "submitted"
+type eventPayload struct {
 	PullRequest struct {
-		Links struct {
-			HTML struct {
-				Href string `json:"href"` // "https://github.com/slack-emoji-reaction/public-repo/pull/1"
-			} `json:"html"`
-		} `json:"_links"`
-		Base struct {
-			Repo struct {
-				Name  string `json:"name"` // "public-repo"
-				Owner struct {
-					HTMLURL string `json:"html_url"` // "https://github.com/slack-emoji-reaction"
-					Login   string `json:"login"`
-				} `json:"owner"`
-			} `json:"repo"`
-		} `json:"base"`
-		// Draft   bool   `json:"draft"`
 		HTMLURL string `json:"html_url"` // "https://github.com/slack-emoji-reaction/public-repo/pull/1"
 		Number  int    `json:"number"`   // 1
-		// RequestedReviewers []any  `json:"requested_reviewers"`
-		// RequestedTeams     []any  `json:"requested_teams"`
-		State string `json:"state"` // "open"
 	} `json:"pull_request"`
 	Repository struct {
-		FullName string `json:"full_name"` // "slack-emoji-reaction/public-repo"
-		Name     string `json:"name"`      // "public-repo"
-		Owner    struct {
+		Name  string `json:"name"` // "public-repo"
+		Owner struct {
 			Login string `json:"login"` // "slack-emoji-reaction"
 		} `json:"owner"`
 	} `json:"repository"`
+}
 
-	// Only present for "pull_request_review". "action" is "submitted".
-	// Review struct {
-	// 	State string `json:"state"` // "commented"
-	// } `json:"review"`
+func ParsePayload(payload []byte) (prUrl, owner, repo string, number int, _ error) {
+	var event eventPayload
+	if err := json.Unmarshal(payload, &event); err != nil {
+		return "", "", "", 0, fmt.Errorf("could not unmarshal payload: %w", err)
+	}
+	return event.PullRequest.HTMLURL,
+		event.Repository.Owner.Login,
+		event.Repository.Name,
+		event.PullRequest.Number, nil
 }
 
 type API struct {
 	client *github.Client
 }
 
-func New(httpCLient *http.Client, token string) API {
+func New(httpCLient *http.Client) API {
 	return API{github.NewClient(httpCLient)}
 }
 
 type PullRequestStatus struct {
-	State string
+	Merged           bool
+	Closed           bool
+	Commented        bool
+	Approved         bool
+	ChangesRequested bool
 }
 
-func (api API) PullRequestStatus(ctx context.Context, url string) (PullRequestStatus, error) {
-	var owner, repo string
-	var number int
-	n, err := fmt.Sscanf(url, "https://github.com/%s/%s/pull/%d", &owner, &repo, &number)
-	if err != nil {
-		return PullRequestStatus{}, fmt.Errorf("failed to fmt.Sscanf(%s): %w", url, err)
-	}
-	if n != 3 {
-		return PullRequestStatus{}, fmt.Errorf("unexpected number of items parsed: %d", n)
-	}
+func (api API) PullRequestStatus(ctx context.Context, owner, repo string, number int) (PullRequestStatus, error) {
 	pr, _, err := api.client.PullRequests.Get(ctx, owner, repo, number)
 	if err != nil {
 		return PullRequestStatus{},
 			fmt.Errorf("PullRequests.Get(,%s, %s, %d): %w", owner, repo, number, err)
 	}
-	return PullRequestStatus{State: pr.GetState()}, nil
+	status := PullRequestStatus{
+		Merged: pr.GetMerged(),
+	}
+	if !status.Merged && pr.GetState() == "closed" {
+		status.Closed = true
+	}
+	reviews, _, err := api.client.PullRequests.ListReviews(ctx, owner, repo, number, nil)
+	if err != nil {
+		return PullRequestStatus{},
+			fmt.Errorf("PullRequests.Get(,%s, %s, %d): %w", owner, repo, number, err)
+	}
+	for _, review := range reviews {
+		switch review.GetState() {
+		case "changes_requested":
+			status.ChangesRequested = true
+		case "approved":
+			status.Approved = true
+		case "commented":
+			status.Commented = true
+		}
+	}
+	return status, nil
 }
