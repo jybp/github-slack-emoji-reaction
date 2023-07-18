@@ -76,6 +76,9 @@ func (api API) PullRequestStatus(ctx context.Context, owner, repo string, number
 	latestByAuthor := map[int64]string{}
 	for i, review := range reviews {
 		log.Printf("review %d: %s\n", i, review.String())
+		if pr.GetUser().GetID() == review.User.GetID() {
+			continue // Skip PR author.
+		}
 		latestByAuthor[review.User.GetID()] = strings.ToLower(review.GetState())
 	}
 	// https://docs.github.com/en/rest/pulls/review-requests?apiVersion=2022-11-28#get-all-requested-reviewers-for-a-pull-request
