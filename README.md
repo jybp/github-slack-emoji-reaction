@@ -12,7 +12,7 @@ on:
   pull_request_review:
     types: [submitted]
   pull_request:
-    types: [closed, reopened]
+    types: [closed, reopened, review_requested]
 permissions:
   pull-requests: read
 jobs:

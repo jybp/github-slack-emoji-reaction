@@ -90,10 +90,13 @@ func (api API) PullRequestStatus(ctx context.Context, owner, repo string, number
 	// that he has been requested to review the PR again by the PR author and his old review should be
 	// considered dismissed.
 	for _, reviewer := range reviewers.Users {
-		if _, ok := latestByAuthor[reviewer.GetID()]; ok {
-			delete(latestByAuthor, reviewer.GetID())
+		closedOrMerged := status.Closed || status.Merged
+		_, ok := latestByAuthor[reviewer.GetID()]
+		if ok && !closedOrMerged {
+			// Only mark the PR has re-requesting a review if it's not closed/merged.
 			status.ReviewRequested = true
 		}
+		delete(latestByAuthor, reviewer.GetID())
 	}
 	for _, state := range latestByAuthor {
 		switch state {
