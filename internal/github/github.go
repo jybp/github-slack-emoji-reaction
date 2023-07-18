@@ -50,6 +50,9 @@ type PullRequestStatus struct {
 	Commented        bool
 	Closed           bool
 	Merged           bool
+
+	// True when a reviewer who has already submitted a review has been re-requested to review the PR.
+	ReviewRequested bool
 }
 
 func (api API) PullRequestStatus(ctx context.Context, owner, repo string, number int) (PullRequestStatus, error) {
@@ -68,12 +71,29 @@ func (api API) PullRequestStatus(ctx context.Context, owner, repo string, number
 	reviews, _, err := api.client.PullRequests.ListReviews(ctx, owner, repo, number, nil)
 	if err != nil {
 		return PullRequestStatus{},
-			fmt.Errorf("PullRequests.Get(,%s, %s, %d): %w", owner, repo, number, err)
+			fmt.Errorf("PullRequests.ListReviews(,%s, %s, %d): %w", owner, repo, number, err)
 	}
 	latestByAuthor := map[int64]string{}
 	for i, review := range reviews {
 		log.Printf("review %d: %s\n", i, review.String())
 		latestByAuthor[review.User.GetID()] = strings.ToLower(review.GetState())
+	}
+	// https://docs.github.com/en/rest/pulls/review-requests?apiVersion=2022-11-28#get-all-requested-reviewers-for-a-pull-request
+	// Once a requested reviewer submits a review, they are no longer considered a requested reviewer.
+	// Their review will instead be returned by the List reviews for a pull request operation.
+	reviewers, _, err := api.client.PullRequests.ListReviewers(ctx, owner, repo, number, nil)
+	if err != nil {
+		return PullRequestStatus{},
+			fmt.Errorf("PullRequests.ListReviewers(,%s, %s, %d): %w", owner, repo, number, err)
+	}
+	// If one reviewer has submitted a review AND is still in the list of requested reviewers, it means
+	// that he has been requested to review the PR again by the PR author and his old review should be
+	// considered dismissed.
+	for _, reviewer := range reviewers.Users {
+		if _, ok := latestByAuthor[reviewer.GetID()]; ok {
+			delete(latestByAuthor, reviewer.GetID())
+			status.ReviewRequested = true
+		}
 	}
 	for _, state := range latestByAuthor {
 		switch state {

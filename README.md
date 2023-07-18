@@ -36,4 +36,5 @@ jobs:
             EMOJI_COMMENTED: speech_balloon
             EMOJI_CLOSED: no_entry
             EMOJI_MERGED: large_purple_square
+			EMOJI_REVIEW_REQUESTED: arrows_counterclockwise
 ```

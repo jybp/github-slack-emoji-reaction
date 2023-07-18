@@ -93,12 +93,16 @@ func run() error {
 	if len(os.Getenv("EMOJI_MERGED")) > 0 {
 		slack.EmojiMerged = os.Getenv("EMOJI_MERGED")
 	}
+	if len(os.Getenv("EMOJI_REVIEW_REQUESTED")) > 0 {
+		slack.EmojiReviewRequested = os.Getenv("EMOJI_REVIEW_REQUESTED")
+	}
 	emojis := map[string]bool{
 		slack.EmojiApproved:         status.Approved,
 		slack.EmojiChangesRequested: status.ChangesRequested,
 		slack.EmojiCommented:        status.Commented,
 		slack.EmojiClosed:           status.Closed,
 		slack.EmojiMerged:           status.Merged,
+		slack.EmojiReviewRequested:  status.ReviewRequested,
 	}
 	slackAPI := slack.New(http.DefaultClient, slackBotToken)
 	if err := slackAPI.SetEmojis(ctx, url, channelIDs, emojis); err != nil {

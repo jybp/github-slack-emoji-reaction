@@ -3,7 +3,7 @@ on:
   pull_request_review:
     types: [submitted]
   pull_request:
-    types: [closed, reopened]
+    types: [closed, reopened, review_requested]
 permissions:
   pull-requests: read
 jobs:
@@ -27,3 +27,4 @@ jobs:
             EMOJI_COMMENTED: speech_balloon
             EMOJI_CLOSED: no_entry
             EMOJI_MERGED: large_purple_square
+            EMOJI_REVIEW_REQUESTED: arrows_counterclockwise

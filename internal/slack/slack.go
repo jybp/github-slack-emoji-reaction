@@ -16,9 +16,10 @@ var (
 
 	// Review state:
 	// https://docs.github.com/en/rest/pulls/reviews?apiVersion=2022-11-28#list-reviews-for-a-pull-request
-	EmojiApproved         = "white_check_mark" // ✅
-	EmojiChangesRequested = "x"                // ❌
-	EmojiCommented        = "speech_balloon"   // 💬
+	EmojiApproved         = "white_check_mark"        // ✅
+	EmojiChangesRequested = "x"                       // ❌
+	EmojiCommented        = "speech_balloon"          // 💬
+	EmojiReviewRequested  = "arrows_counterclockwise" // 🔄
 
 	// PR state:
 	// https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#get-a-pull-request
