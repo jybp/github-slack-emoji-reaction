@@ -73,13 +73,23 @@ func (api API) PullRequestStatus(ctx context.Context, owner, repo string, number
 		return PullRequestStatus{},
 			fmt.Errorf("PullRequests.ListReviews(,%s, %s, %d): %w", owner, repo, number, err)
 	}
+	const (
+		state_approved          = "approved"
+		state_commented         = "commented"
+		state_changes_requested = "changes_requested"
+	)
 	latestByAuthor := map[int64]string{}
 	for i, review := range reviews {
 		log.Printf("review %d: %s\n", i, review.String())
 		if pr.GetUser().GetID() == review.User.GetID() {
 			continue // Skip PR author.
 		}
-		latestByAuthor[review.User.GetID()] = strings.ToLower(review.GetState())
+		reviewState := strings.ToLower(review.GetState())
+		currentState, ok := latestByAuthor[review.User.GetID()]
+		if ok && currentState == state_approved && reviewState == state_commented {
+			continue // skip new comment as already approved by reviewer.
+		}
+		latestByAuthor[review.User.GetID()] = reviewState
 	}
 	// https://docs.github.com/en/rest/pulls/review-requests?apiVersion=2022-11-28#get-all-requested-reviewers-for-a-pull-request
 	// Once a requested reviewer submits a review, they are no longer considered a requested reviewer.
@@ -103,12 +113,12 @@ func (api API) PullRequestStatus(ctx context.Context, owner, repo string, number
 	}
 	for _, state := range latestByAuthor {
 		switch state {
-		case "approved":
+		case state_approved:
 			status.Approved = true
-		case "changes_requested":
-			status.ChangesRequested = true
-		case "commented":
+		case state_commented:
 			status.Commented = true
+		case state_changes_requested:
+			status.ChangesRequested = true
 		}
 	}
 	return status, nil

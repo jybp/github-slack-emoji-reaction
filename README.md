@@ -23,7 +23,7 @@ jobs:
         - uses: actions/checkout@v3
           with:
             repository: jybp/github-slack-emoji-reaction
-            ref: 'v1.1.0'
+            ref: 'v1.1.1'
         - uses: actions/setup-go@v4
           with:
             go-version: '1.20'
