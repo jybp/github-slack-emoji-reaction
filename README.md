@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-        - uses: actions/checkout@v3
+        - uses: actions/checkout@v4
           with:
             repository: jybp/github-slack-emoji-reaction
             ref: 'v1.1.1'
