@@ -46,27 +46,40 @@ func (api API) SetEmojis(ctx context.Context, match string, channelIDs []string,
 		}
 		log.Printf("%d messages found in channel %s\n", len(resp.Messages), channelID)
 		for _, msg := range resp.Messages {
-			idx := strings.LastIndex(msg.Text, match)
-			if idx == -1 {
-				continue
+			msgWithReplies := []slack.Message{msg}
+			if msg.ReplyCount > 0 {
+				replies, _, _, _ := api.client.GetConversationRepliesContext(ctx, &slack.GetConversationRepliesParameters{
+					ChannelID: channelID,
+					Timestamp: msg.Timestamp,
+					Limit:     100,
+				})
+				msgWithReplies = append(msgWithReplies, replies...)
+				log.Printf("%d replies found in channel %s\n", len(replies), channelID)
 			}
-			rest := msg.Text[idx+len(match):]
-			if len(rest) > 0 && unicode.IsDigit(rune(rest[0])) {
-				continue
-			}
-			ref := slack.NewRefToMessage(channelID, msg.Timestamp)
-			log.Printf("message %+v adding emojis %+v\n", ref, emojis)
-			for emoji, set := range emojis {
-				if set {
-					if err := api.client.AddReactionContext(ctx, emoji, ref); err != nil &&
-						err.Error() != "already_reacted" {
-						return fmt.Errorf("AddReactionContext(ctx,%s,%+v): %w", emoji, ref, err)
-					}
+			for _, msg := range msgWithReplies {
+				idx := strings.LastIndex(msg.Text, match)
+				if idx == -1 {
 					continue
 				}
-				if err := api.client.RemoveReactionContext(ctx, emoji, ref); err != nil &&
-					err.Error() != "no_reaction" {
-					return fmt.Errorf("RemoveReactionContext(ctx,%s,%+v): %w", emoji, ref, err)
+				rest := msg.Text[idx+len(match):]
+				if len(rest) > 0 && unicode.IsDigit(rune(rest[0])) {
+					continue
+				}
+				ref := slack.NewRefToMessage(channelID, msg.Timestamp)
+
+				log.Printf("message %+v adding emojis %+v\n", ref, emojis)
+				for emoji, set := range emojis {
+					if set {
+						if err := api.client.AddReactionContext(ctx, emoji, ref); err != nil &&
+							err.Error() != "already_reacted" {
+							return fmt.Errorf("AddReactionContext(ctx,%s,%+v): %w", emoji, ref, err)
+						}
+						continue
+					}
+					if err := api.client.RemoveReactionContext(ctx, emoji, ref); err != nil &&
+						err.Error() != "no_reaction" {
+						return fmt.Errorf("RemoveReactionContext(ctx,%s,%+v): %w", emoji, ref, err)
+					}
 				}
 			}
 		}
