@@ -54,8 +54,8 @@ func (api API) SetEmojis(ctx context.Context, match string, channelIDs []string,
 					Limit:     100,
 				})
 				msgWithReplies = append(msgWithReplies, replies...)
+				log.Printf("%d replies found in channel %s\n", len(replies), channelID)
 			}
-
 			for _, msg := range msgWithReplies {
 				idx := strings.LastIndex(msg.Text, match)
 				if idx == -1 {
