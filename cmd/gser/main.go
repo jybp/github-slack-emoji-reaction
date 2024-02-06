@@ -28,7 +28,7 @@ func init() {
 
 func main() {
 	if err := run(); err != nil {
-		fmt.Printf("%+v", err)
+		fmt.Printf("%+v\n", err)
 		os.Exit(1)
 	}
 }
