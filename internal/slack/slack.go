@@ -28,18 +28,20 @@ var (
 )
 
 type API struct {
-	client *slack.Client
+	client              *slack.Client
+	channelIDs          []string
+	limit, repliesLimit int
 }
 
-func New(httpCLient *http.Client, token string) API {
-	return API{slack.New(token, slack.OptionHTTPClient(httpCLient))}
+func New(httpCLient *http.Client, token string, channelIDs []string, limit, repliesLimit int) API {
+	return API{slack.New(token, slack.OptionHTTPClient(httpCLient)), channelIDs, limit, repliesLimit}
 }
 
-func (api API) SetEmojis(ctx context.Context, match string, channelIDs []string, emojis map[string]bool) error {
-	for _, channelID := range channelIDs {
+func (api API) SetEmojis(ctx context.Context, match string, emojis map[string]bool) error {
+	for _, channelID := range api.channelIDs {
 		resp, err := api.client.GetConversationHistoryContext(ctx, &slack.GetConversationHistoryParameters{
 			ChannelID: channelID,
-			Limit:     100,
+			Limit:     api.limit,
 		})
 		if err != nil {
 			return fmt.Errorf("GetConversationHistoryContext(,%s): %w", channelID, err)
@@ -51,7 +53,7 @@ func (api API) SetEmojis(ctx context.Context, match string, channelIDs []string,
 				replies, _, _, _ := api.client.GetConversationRepliesContext(ctx, &slack.GetConversationRepliesParameters{
 					ChannelID: channelID,
 					Timestamp: msg.Timestamp,
-					Limit:     100,
+					Limit:     api.repliesLimit,
 				})
 				msgWithReplies = append(msgWithReplies, replies...)
 				log.Printf("%d replies found in channel %s\n", len(replies), channelID)

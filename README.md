@@ -3,8 +3,9 @@
 1. Add the GitHub workflow below in your repository.
 2. Set a Slack bot token in the `SLACK_BOT_TOKEN` secret with the following permissions: `channels:history`, `reactions:read`, `reactions:write`.
 3. Update `SLACK_CHANNEL_IDS` with the channel IDs to cover.
-4. Optionally customize the Slack emojis.
-5. Invite the bot to the channels in Slack.
+4. Optionally customize the Slack emojis with the `EMOJI_*` environment variables.
+5. Optionally customize the number of messages looked up on each channel with the `SLACK_MESSAGES_LIMIT` and `SLACK_REPLIES_LIMIT` environment variables.
+6. Invite the bot to the channels in Slack.
 
 ```
 name: GitHub Slack Emoji Reaction
@@ -38,4 +39,6 @@ jobs:
             EMOJI_CLOSED: no_entry
             EMOJI_MERGED: large_purple_square
             EMOJI_REVIEW_REQUESTED: arrows_counterclockwise
+            SLACK_MESSAGES_LIMIT: 100
+            SLACK_REPLIES_LIMIT: 100
 ```

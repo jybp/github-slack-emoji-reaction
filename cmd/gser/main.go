@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/jybp/github-slack-emoji-reaction/internal/github"
@@ -96,6 +97,19 @@ func run() error {
 	if len(os.Getenv("EMOJI_REVIEW_REQUESTED")) > 0 {
 		slack.EmojiReviewRequested = os.Getenv("EMOJI_REVIEW_REQUESTED")
 	}
+	limit, repliesLimit := 40, 20
+	if len(os.Getenv("SLACK_MESSAGES_LIMIT")) > 0 {
+		limit, err = strconv.Atoi(os.Getenv("SLACK_MESSAGES_LIMIT"))
+		if err != nil {
+			return fmt.Errorf("could not parse SLACK_MESSAGES_LIMIT: %w", err)
+		}
+	}
+	if len(os.Getenv("SLACK_REPLIES_LIMIT")) > 0 {
+		repliesLimit, err = strconv.Atoi(os.Getenv("SLACK_REPLIES_LIMIT"))
+		if err != nil {
+			return fmt.Errorf("could not parse SLACK_REPLIES_LIMIT: %w", err)
+		}
+	}
 	emojis := map[string]bool{
 		slack.EmojiApproved:         status.Approved,
 		slack.EmojiChangesRequested: status.ChangesRequested,
@@ -104,8 +118,8 @@ func run() error {
 		slack.EmojiMerged:           status.Merged,
 		slack.EmojiReviewRequested:  status.ReviewRequested,
 	}
-	slackAPI := slack.New(http.DefaultClient, slackBotToken)
-	if err := slackAPI.SetEmojis(ctx, url, channelIDs, emojis); err != nil {
+	slackAPI := slack.New(http.DefaultClient, slackBotToken, channelIDs, limit, repliesLimit)
+	if err := slackAPI.SetEmojis(ctx, url, emojis); err != nil {
 		return fmt.Errorf("SetEmojis failed: %w", err)
 	}
 	return nil
