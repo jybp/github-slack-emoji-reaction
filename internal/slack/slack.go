@@ -37,7 +37,12 @@ func New(httpCLient *http.Client, token string, channelIDs []string, limit, repl
 	return API{slack.New(token, slack.OptionHTTPClient(httpCLient)), channelIDs, limit, repliesLimit}
 }
 
-func (api API) SetEmojis(ctx context.Context, match string, emojis map[string]bool) error {
+type SetEmoji struct {
+	Name string
+	Set  bool
+}
+
+func (api API) SetEmojis(ctx context.Context, match string, emojis []SetEmoji) error {
 	for _, channelID := range api.channelIDs {
 		resp, err := api.client.GetConversationHistoryContext(ctx, &slack.GetConversationHistoryParameters{
 			ChannelID: channelID,
@@ -70,17 +75,18 @@ func (api API) SetEmojis(ctx context.Context, match string, emojis map[string]bo
 				ref := slack.NewRefToMessage(channelID, msg.Timestamp)
 
 				log.Printf("message %+v adding emojis %+v\n", ref, emojis)
-				for emoji, set := range emojis {
-					if set {
-						if err := api.client.AddReactionContext(ctx, emoji, ref); err != nil &&
-							err.Error() != "already_reacted" {
-							return fmt.Errorf("AddReactionContext(ctx,%s,%+v): %w", emoji, ref, err)
-						}
-						continue
-					}
-					if err := api.client.RemoveReactionContext(ctx, emoji, ref); err != nil &&
+				for _, emoji := range emojis {
+					if err := api.client.RemoveReactionContext(ctx, emoji.Name, ref); err != nil &&
 						err.Error() != "no_reaction" {
-						return fmt.Errorf("RemoveReactionContext(ctx,%s,%+v): %w", emoji, ref, err)
+						return fmt.Errorf("RemoveReactionContext(ctx,%s,%+v): %w", emoji.Name, ref, err)
+					}
+				}
+				for _, emoji := range emojis {
+					if emoji.Set {
+						if err := api.client.AddReactionContext(ctx, emoji.Name, ref); err != nil &&
+							err.Error() != "already_reacted" {
+							return fmt.Errorf("AddReactionContext(ctx,%s,%+v): %w", emoji.Name, ref, err)
+						}
 					}
 				}
 			}

@@ -110,13 +110,13 @@ func run() error {
 			return fmt.Errorf("could not parse SLACK_REPLIES_LIMIT: %w", err)
 		}
 	}
-	emojis := map[string]bool{
-		slack.EmojiApproved:         status.Approved,
-		slack.EmojiChangesRequested: status.ChangesRequested,
-		slack.EmojiCommented:        status.Commented,
-		slack.EmojiClosed:           status.Closed,
-		slack.EmojiMerged:           status.Merged,
-		slack.EmojiReviewRequested:  status.ReviewRequested,
+	emojis := []slack.SetEmoji{
+		{Name: slack.EmojiCommented, Set: status.Commented},
+		{Name: slack.EmojiReviewRequested, Set: status.ReviewRequested},
+		{Name: slack.EmojiChangesRequested, Set: status.ChangesRequested},
+		{Name: slack.EmojiApproved, Set: status.Approved},
+		{Name: slack.EmojiMerged, Set: status.Merged},
+		{Name: slack.EmojiClosed, Set: status.Closed},
 	}
 	slackAPI := slack.New(http.DefaultClient, slackBotToken, channelIDs, limit, repliesLimit)
 	if err := slackAPI.SetEmojis(ctx, url, emojis); err != nil {
