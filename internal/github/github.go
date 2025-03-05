@@ -56,6 +56,7 @@ type PullRequestStatus struct {
 }
 
 func (api API) PullRequestStatus(ctx context.Context, owner, repo string, number int) (PullRequestStatus, error) {
+	// https://docs.github.com/en/rest/pulls/pulls#get-a-pull-request
 	pr, _, err := api.client.PullRequests.Get(ctx, owner, repo, number)
 	if err != nil {
 		return PullRequestStatus{},
@@ -121,5 +122,16 @@ func (api API) PullRequestStatus(ctx context.Context, owner, repo string, number
 			status.ChangesRequested = true
 		}
 	}
+	// https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#get-a-pull-request
+	//
+	// The value of the mergeable attribute can be true, false, or null. If the value is null, then
+	// GitHub has started a background job to compute the mergeability. After giving the job time to
+	// complete, resubmit the request. When the job finishes, you will see a non-null value for the
+	// mergeable attribute in the response.
+	//
+	// https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#check_suite
+	//
+	// May require check_suite.
+	status.Approved = status.Approved && pr.Mergeable != nil && *pr.Mergeable
 	return status, nil
 }

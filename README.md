@@ -14,6 +14,8 @@ Automatically add Slack emoji reactions to messages with Pull Request links.
       types: [submitted, edited, dismissed]
     pull_request:
       types: [closed, reopened, review_requested]
+  check_suite:
+    types: [completed]
   permissions:
     pull-requests: read
   jobs:
