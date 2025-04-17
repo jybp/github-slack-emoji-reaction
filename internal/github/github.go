@@ -84,6 +84,9 @@ func (api API) PullRequestStatus(ctx context.Context, owner, repo string, number
 		if pr.GetUser().GetID() == review.User.GetID() {
 			continue // Skip PR author.
 		}
+		if strings.EqualFold(review.User.GetType(), "bot") {
+			continue // Skip bots.
+		}
 		reviewState := strings.ToLower(review.GetState())
 		currentState, ok := latestByAuthor[review.User.GetID()]
 		if ok && currentState == state_approved && reviewState == state_commented {
@@ -102,7 +105,8 @@ func (api API) PullRequestStatus(ctx context.Context, owner, repo string, number
 	// If one reviewer has submitted a review AND is still in the list of requested reviewers, it means
 	// that he has been requested to review the PR again by the PR author and his old review should be
 	// considered dismissed.
-	for _, reviewer := range reviewers.Users {
+	for i, reviewer := range reviewers.Users {
+		log.Printf("reviewer %d: %s\n", i, reviewer.String())
 		closedOrMerged := status.Closed || status.Merged
 		_, ok := latestByAuthor[reviewer.GetID()]
 		if ok && !closedOrMerged {

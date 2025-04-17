@@ -74,19 +74,19 @@ func (api API) SetEmojis(ctx context.Context, match string, emojis []SetEmoji) e
 				}
 				ref := slack.NewRefToMessage(channelID, msg.Timestamp)
 
-				log.Printf("message %+v adding emojis %+v\n", ref, emojis)
-				for _, emoji := range emojis {
-					if err := api.client.RemoveReactionContext(ctx, emoji.Name, ref); err != nil &&
-						err.Error() != "no_reaction" {
-						return fmt.Errorf("RemoveReactionContext(ctx,%s,%+v): %w", emoji.Name, ref, err)
-					}
-				}
+				log.Printf("message %+v setting emojis %+v\n", ref, emojis)
+				// Forcing consistent emoji order is not possible.
 				for _, emoji := range emojis {
 					if emoji.Set {
 						if err := api.client.AddReactionContext(ctx, emoji.Name, ref); err != nil &&
 							err.Error() != "already_reacted" {
 							return fmt.Errorf("AddReactionContext(ctx,%s,%+v): %w", emoji.Name, ref, err)
 						}
+						continue
+					}
+					if err := api.client.RemoveReactionContext(ctx, emoji.Name, ref); err != nil &&
+						err.Error() != "no_reaction" {
+						return fmt.Errorf("RemoveReactionContext(ctx,%s,%+v): %w", emoji.Name, ref, err)
 					}
 				}
 			}
